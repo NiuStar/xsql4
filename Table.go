@@ -61,7 +61,13 @@ func (this *fieldTable) GetPrimaryKey() []string {
 
 func Register(tableName string,table interface{},comment string) *fieldTable {
 	t := &fieldTable{tableName:tableName,table:table,comment:comment,ukey:make(map[string][]string),ikey:make(map[string][]string)}
-	t.copyToMySQL()
+
+	if GetServerDB() == nil {
+		fieldTables = append(fieldTables,t)
+	} else {
+		t.copyToMySQL()
+	}
+
 	return t
 }
 

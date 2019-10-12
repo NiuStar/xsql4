@@ -8,38 +8,54 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"strconv"
 	"time"
-	"github.com/NiuStar/Basic"
 	"reflect"
 )
 
+type DBConfig struct {
+	DB_server string `xml:"db_server"`
+	DB_port string `xml:"db_port"`
+	DB_name string `xml:"db_name"`
+	DB_user string `xml:"db_user"`
+	DB_password string `xml:"db_password"`
+	DB_charset string `xml:"db_charset"`
+}
+
+func NewDBConfig(user,password,serverip,port,name,charset string) *DBConfig {
+	return &DBConfig{DB_server:serverip,DB_port:port,DB_name:name,DB_user:user,DB_password:password,DB_charset:charset}
+}
+
 var (
-	TAG string = " <XSQL>"
-	xs *XSql = nil
-	dbConfig *Basic.DBConfig = nil
+	TAG string                = " <XSQL>"
+	xs *XSql                  = nil
+	dbConfig *DBConfig = nil
+	fieldTables []*fieldTable
 )
 
-func init() {
-
-	serConfig := Basic.GetServerConfig()
-	if serConfig == nil {
-		return 
-	}
-	c := serConfig.DBConfig
-
-	if c == nil {
+func InitServerDBWithConfig(dbconfig *DBConfig) {
+	if dbconfig == nil {
 		return
 	}
-	xs = InitSql(c.DB_user,c.DB_password,c.DB_server,c.DB_port,c.DB_name,c.DB_charset)
+	dbConfig = dbconfig
 
-	CreateDB(c.DB_name,c.DB_charset,c.DB_charset + "_general_ci")
+	xs = InitSql(dbConfig.DB_user,dbConfig.DB_password,dbConfig.DB_server,dbConfig.DB_port,dbConfig.DB_name,dbConfig.DB_charset)
 
-	UseDataBase(c.DB_name)
+	CreateDB(dbConfig.DB_name,dbConfig.DB_charset,dbConfig.DB_charset + "_general_ci")
 
-	dbConfig = c
+	UseDataBase(dbConfig.DB_name)
+
+	if len(fieldTables) > 0 {
+		for _,f := range fieldTables {
+			f.copyToMySQL()
+		}
+		fieldTables = []*fieldTable{}
+	}
+}
+
+func InitServerDB(user,password,serverip,port,name,charset string) {
+	InitServerDBWithConfig(NewDBConfig(user,password,serverip,port,name,charset))
 }
 
 func GetServerDB() *XSql {
-
 	return xs
 }
 

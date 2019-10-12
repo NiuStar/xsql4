@@ -3,11 +3,12 @@ package DBFactory
 import (
 	"github.com/NiuStar/xsql4/Type"
 	"fmt"
-	"strconv"
 	"github.com/NiuStar/xsql4"
+	"strconv"
 	"bytes"
 	"reflect"
 	"strings"
+	"encoding/json"
 	reflect2 "github.com/NiuStar/reflect"
 )
 
@@ -55,7 +56,7 @@ type DBFactory struct {
 	desc     bool
 	limitStart,limitEnd int
 
-	xsql     *xsql3.XSqlOrder
+	xsql     *xsql4.XSqlOrder
 	transactionBegin bool
 
 	unionAllDB []*DBFactory
@@ -65,7 +66,7 @@ type DBFactory struct {
 }
 
 func NewDBFactory() *DBFactory {
-	return &DBFactory{limitStart:-1,limitEnd:-1,xsql:xsql3.CreateInstance(xsql3.GetServerDB()),transactionBegin:false}
+	return &DBFactory{limitStart:-1,limitEnd:-1,xsql:xsql4.CreateInstance(xsql4.GetServerDB()),transactionBegin:false}
 }
 //如果起始值都为-1，则不限制条数
 func (db *DBFactory)Limit(start,end int) *DBFactory {
@@ -182,6 +183,21 @@ func (db *DBFactory)GetResultsOperation() (results []map[string]Type.DBOperation
 	return db.ParseResults(db.GetResults())
 }
 
+func (db *DBFactory)GetResultsByOperation(data interface{}) {
+	body,err := json.Marshal(db.GetResults())
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body,data)
+	if err != nil {
+		return
+	}
+
+	return
+	//reflect.ValueOf(Operation).Interface()
+	//return db.ParseResults(db.GetResults())
+}
+
 func (db *DBFactory)getTableFields(operation Type.DBOperation) string {
 
 	var str string = ""
@@ -273,7 +289,7 @@ func PrintStruct(data interface{}) {
 }
 
 func (db *DBFactory)InsertDB(list... Type.DBOperation) (latsid int64) {
-	return xsql3.InsertDB(db.xsql,list...)
+	return xsql4.InsertDB(db.xsql,list...)
 }
 
 func (db *DBFactory)DeleteDB(obj Type.DBOperation) (num int64) {
@@ -287,7 +303,7 @@ func (db *DBFactory)DeleteDB(obj Type.DBOperation) (num int64) {
 }
 
 func (db *DBFactory)DeleteDBALL(tableName string) (num int64) {
-	return xsql3.DeleteDBALL(db.xsql,tableName)
+	return xsql4.DeleteDBALL(db.xsql,tableName)
 }
 
 func (db *DBFactory)UpdateDB(list... Type.DBOperation) (num int64) {
@@ -447,7 +463,7 @@ func (db *DBFactory)ParseResults(datas []map[string]interface{}) (results []map[
 			results = append(results,make(map[string]Type.DBOperation))
 		}
 		for name,value := range result_list {
-			results[index][name] = xsql3.ScanStructInterface(value.Addr().Interface().(Type.DBOperation))
+			results[index][name] = xsql4.ScanStructInterface(value.Addr().Interface().(Type.DBOperation))
 		}
 	}
 	return results
