@@ -4,6 +4,7 @@ import (
 	"strings"
 	"fmt"
 	"github.com/NiuStar/reflect"
+	"github.com/NiuStar/xsql4/Type"
 
 )
 
@@ -59,7 +60,8 @@ func (this *fieldTable) GetPrimaryKey() []string {
 	return this.pkey
 }
 
-func Register(tableName string,table interface{},comment string) *fieldTable {
+func Register(table Type.DBOperation, file,comment string) *fieldTable {
+	tableName := table.TableName()
 	t := &fieldTable{tableName:tableName,table:table,comment:comment,ukey:make(map[string][]string),ikey:make(map[string][]string)}
 
 	if GetServerDB() == nil {
